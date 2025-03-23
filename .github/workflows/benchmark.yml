@@ -44,7 +44,7 @@ jobs:
         
         # Update timestamp in README
         TODAY=$(date +"%m/%d/%Y, %I:%M:%S %p")
-        sed -i "s/Benchmark run on .*/Benchmark run on $TODAY/" README.md
+        sed -i'' "s/Benchmark run on .*/Benchmark run on $TODAY/" README.md
         
         # Commit and push changes if there are any
         git config --global user.name "GitHub Action"
