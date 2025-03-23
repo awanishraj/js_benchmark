@@ -1,0 +1,17 @@
+{
+  "name": "jsbenchmark",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "benchmark": "node benchmark.js"
+  },
+  "keywords": ["javascript", "benchmarks", "performance", "node", "bun", "deno"],
+  "author": "",
+  "license": "ISC",
+  "description": "A comprehensive benchmarking tool for JavaScript runtimes",
+  "dependencies": {
+    "hermes-engine": "^0.11.0",
+    "microtime": "^3.1.1"
+  }
+}
