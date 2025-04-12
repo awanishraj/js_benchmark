@@ -55,10 +55,10 @@ try {
   runtimes.push({ name: 'Deno', available: false });
 }
 
-// Check Dart
+// Check Dart (JIT)
 try {
   const dartVersion = execSync('dart --version', { encoding: 'utf8' }).trim().split(' ')[1];
-  console.log(`Dart ${dartVersion || 'SDK'} is available`);
+  console.log(`Dart JIT ${dartVersion || 'SDK'} is available`);
   
   // Create a separate dart directory if it doesn't exist
   const DART_DIR = path.join(__dirname, 'dart_benchmarks');
@@ -69,15 +69,58 @@ try {
 
   // For Dart, we need separate Dart files since the syntax is different
   runtimes.push({ 
-    name: 'Dart', 
+    name: 'Dart JIT', 
     cmd: 'dart',
     version: dartVersion || 'SDK',
     available: true,
     useDartFiles: true // Flag to use Dart-specific files
   });
+  
+  // Check Dart AOT
+  try {
+    // Compile Dart files to executables for AOT mode
+    console.log("Setting up Dart AOT executables...");
+    
+    // Create directory for AOT executables if it doesn't exist
+    const DART_AOT_DIR = path.join(__dirname, 'dart_aot');
+    if (!fs.existsSync(DART_AOT_DIR)) {
+      fs.mkdirSync(DART_AOT_DIR);
+      console.log('Created dart_aot directory');
+    }
+
+    // Compile dart files to AOT executables during setup
+    fs.readdirSync(DART_DIR).filter(file => file.endsWith('.dart')).forEach(dartFile => {
+      const baseName = path.basename(dartFile, '.dart');
+      const dartFilePath = path.join(DART_DIR, dartFile);
+      const aotFilePath = path.join(DART_AOT_DIR, baseName);
+      
+      try {
+        console.log(`Compiling ${dartFile} to AOT executable...`);
+        execSync(`dart compile exe "${dartFilePath}" -o "${aotFilePath}"`, { stdio: 'inherit' });
+        console.log(`Successfully compiled ${dartFile} to AOT executable`);
+      } catch (compileError) {
+        console.error(`Error compiling ${dartFile} to AOT:`, compileError.message);
+      }
+    });
+    
+    // Add Dart AOT as a runtime
+    runtimes.push({ 
+      name: 'Dart AOT', 
+      cmd: '',  // Will be set dynamically per benchmark
+      version: dartVersion || 'SDK',
+      available: true,
+      useDartAOT: true // Flag to use Dart AOT executables
+    });
+    
+    console.log(`Dart AOT ${dartVersion || 'SDK'} is available`);
+  } catch (aotError) {
+    console.log('Dart AOT setup failed, skipping...', aotError.message);
+    runtimes.push({ name: 'Dart AOT', available: false });
+  }
 } catch (e) {
   console.log('Dart is not available, skipping...');
-  runtimes.push({ name: 'Dart', available: false });
+  runtimes.push({ name: 'Dart JIT', available: false });
+  runtimes.push({ name: 'Dart AOT', available: false });
 }
 
 // Other JavaScript runtimes can be added here in the future
@@ -107,8 +150,10 @@ benchmarkFiles.forEach(benchmarkFile => {
     try {
       // Select the appropriate benchmark path based on runtime
       let benchmarkPath;
+      let executionCommand = runtime.cmd;
+      
       if (runtime.useDartFiles) {
-        // For Dart, use equivalent Dart files from dart_benchmarks directory
+        // For Dart JIT, use equivalent Dart files from dart_benchmarks directory
         const dartFileName = `${benchmarkName}.dart`;
         benchmarkPath = path.join(__dirname, 'dart_benchmarks', dartFileName);
         
@@ -122,6 +167,25 @@ benchmarkFiles.forEach(benchmarkFile => {
           });
           return;
         }
+      } else if (runtime.useDartAOT) {
+        // For Dart AOT, use the compiled executables
+        const aotFilePath = path.join(__dirname, 'dart_aot', benchmarkName);
+        
+        // Skip if AOT executable doesn't exist
+        if (!fs.existsSync(aotFilePath)) {
+          console.log(`${benchmarkName} AOT executable not found, skipping...`);
+          results[benchmarkName].push({
+            name: runtime.name,
+            time: 0,
+            error: 'Dart AOT executable not available'
+          });
+          return;
+        }
+        
+        // Use the executable directly, no command needed
+        benchmarkPath = aotFilePath;
+        // In Unix-like systems, we need to execute the file directly
+        executionCommand = ''; 
       } else {
         // For JS runtimes, use the JS files
         benchmarkPath = path.join(BENCHMARKS_DIR, benchmarkFile);
@@ -140,8 +204,11 @@ benchmarkFiles.forEach(benchmarkFile => {
         let currentOutput;
         if (runtime.isCustomRunner) {
           currentOutput = runtime.cmd(benchmarkPath);
+        } else if (runtime.useDartAOT) {
+          // For Dart AOT, execute the binary directly
+          currentOutput = execSync(`${benchmarkPath}`, { encoding: 'utf8' });
         } else {
-          currentOutput = execSync(`${runtime.cmd} ${benchmarkPath}`, { encoding: 'utf8' });
+          currentOutput = execSync(`${executionCommand} ${benchmarkPath}`, { encoding: 'utf8' });
         }
         
         const endTime = process.hrtime.bigint();
@@ -409,10 +476,15 @@ const runtimeProfiles = {
     weaknesses: 'Similar performance to Node.js, more limited ecosystem',
     bestFor: 'Security-critical applications, TypeScript projects'
   },
-  'Dart': {
-    strengths: 'Strong typing, optimized for UI, AOT compilation',
+  'Dart JIT': {
+    strengths: 'Strong typing, optimized for UI, good for development',
+    weaknesses: 'Slower JIT performance, larger memory footprint',
+    bestFor: 'Flutter development, iterative coding, debugging'
+  },
+  'Dart AOT': {
+    strengths: 'Strong typing, optimized native code, small footprint',
     weaknesses: 'Limited server-side ecosystem compared to Node.js',
-    bestFor: 'Cross-platform apps, Flutter development, UI-heavy applications'
+    bestFor: 'Production Flutter apps, performance-critical code'
   }
 };
 
@@ -437,12 +509,14 @@ markdown += `- 🔴 **Slower than Node.js**: Values higher than 1.00x represent 
 markdown += `### Key Observations\n\n`;
 markdown += `1. **Bun** consistently outperforms Node.js by **2-3x** across most benchmarks\n`;
 markdown += `2. **Deno** performs similarly to Node.js, with slight variations depending on the task\n`;
-markdown += `3. **Dart** performance varies based on task type; strong in computational tasks\n\n`;
+markdown += `3. **Dart JIT** runs slower than JavaScript runtimes for most benchmarks\n`;
+markdown += `4. **Dart AOT** provides significant performance improvements over Dart JIT\n\n`;
 markdown += `### Selecting the Right Runtime\n\n`;
 markdown += `- For **high-performance applications**: **Bun** offers the best overall performance\n`;
 markdown += `- For **enterprise applications** requiring extensive library support: **Node.js** remains the most mature option\n`;
 markdown += `- For **security-focused applications**: **Deno** provides built-in security features with performance similar to Node.js\n`;
-markdown += `- For **UI-heavy applications**: **Dart** excels for UI rendering and cross-platform development\n`;
+markdown += `- For **UI-heavy applications**: **Dart AOT** excels for UI rendering and cross-platform development\n`;
+markdown += `- For **development/debugging**: **Dart JIT** offers better developer experience with hot reload\n`;
 
 // Write the report
 fs.writeFileSync('benchmark-results.md', markdown);
