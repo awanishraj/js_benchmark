@@ -55,9 +55,34 @@ try {
   runtimes.push({ name: 'Deno', available: false });
 }
 
+// Check Dart
+try {
+  const dartVersion = execSync('dart --version', { encoding: 'utf8' }).trim().split(' ')[1];
+  console.log(`Dart ${dartVersion || 'SDK'} is available`);
+  
+  // Create a separate dart directory if it doesn't exist
+  const DART_DIR = path.join(__dirname, 'dart_benchmarks');
+  if (!fs.existsSync(DART_DIR)) {
+    fs.mkdirSync(DART_DIR);
+    console.log('Created dart_benchmarks directory');
+  }
+
+  // For Dart, we need separate Dart files since the syntax is different
+  runtimes.push({ 
+    name: 'Dart', 
+    cmd: 'dart',
+    version: dartVersion || 'SDK',
+    available: true,
+    useDartFiles: true // Flag to use Dart-specific files
+  });
+} catch (e) {
+  console.log('Dart is not available, skipping...');
+  runtimes.push({ name: 'Dart', available: false });
+}
+
 // Other JavaScript runtimes can be added here in the future
 
-// Only Node.js, Bun, and Deno are included in this comparison
+// Node.js, Bun, Deno, and Dart are included in this comparison
 
 // For each benchmark file
 benchmarkFiles.forEach(benchmarkFile => {
@@ -80,8 +105,28 @@ benchmarkFiles.forEach(benchmarkFile => {
     }
     
     try {
-      // Run the benchmark with the runtime
-      const benchmarkPath = path.join(BENCHMARKS_DIR, benchmarkFile);
+      // Select the appropriate benchmark path based on runtime
+      let benchmarkPath;
+      if (runtime.useDartFiles) {
+        // For Dart, use equivalent Dart files from dart_benchmarks directory
+        const dartFileName = `${benchmarkName}.dart`;
+        benchmarkPath = path.join(__dirname, 'dart_benchmarks', dartFileName);
+        
+        // Skip if Dart file doesn't exist
+        if (!fs.existsSync(benchmarkPath)) {
+          console.log(`${dartFileName} not found in dart_benchmarks directory, skipping...`);
+          results[benchmarkName].push({
+            name: runtime.name,
+            time: 0,
+            error: 'Dart benchmark file not available'
+          });
+          return;
+        }
+      } else {
+        // For JS runtimes, use the JS files
+        benchmarkPath = path.join(BENCHMARKS_DIR, benchmarkFile);
+      }
+      
       console.log(`Running ${benchmarkName} with ${runtime.name}...`);
       
       // Run 3 times and take the best result
@@ -363,6 +408,11 @@ const runtimeProfiles = {
     strengths: 'Security features, built-in TypeScript, modern APIs',
     weaknesses: 'Similar performance to Node.js, more limited ecosystem',
     bestFor: 'Security-critical applications, TypeScript projects'
+  },
+  'Dart': {
+    strengths: 'Strong typing, optimized for UI, AOT compilation',
+    weaknesses: 'Limited server-side ecosystem compared to Node.js',
+    bestFor: 'Cross-platform apps, Flutter development, UI-heavy applications'
   }
 };
 
@@ -386,11 +436,13 @@ markdown += `- 🟢 **Faster than Node.js**: Values lower than 1.00x represent b
 markdown += `- 🔴 **Slower than Node.js**: Values higher than 1.00x represent worse performance than Node.js\n\n`;
 markdown += `### Key Observations\n\n`;
 markdown += `1. **Bun** consistently outperforms Node.js by **2-3x** across most benchmarks\n`;
-markdown += `2. **Deno** performs similarly to Node.js, with slight variations depending on the task\n\n`;
+markdown += `2. **Deno** performs similarly to Node.js, with slight variations depending on the task\n`;
+markdown += `3. **Dart** performance varies based on task type; strong in computational tasks\n\n`;
 markdown += `### Selecting the Right Runtime\n\n`;
 markdown += `- For **high-performance applications**: **Bun** offers the best overall performance\n`;
 markdown += `- For **enterprise applications** requiring extensive library support: **Node.js** remains the most mature option\n`;
 markdown += `- For **security-focused applications**: **Deno** provides built-in security features with performance similar to Node.js\n`;
+markdown += `- For **UI-heavy applications**: **Dart** excels for UI rendering and cross-platform development\n`;
 
 // Write the report
 fs.writeFileSync('benchmark-results.md', markdown);

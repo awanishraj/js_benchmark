@@ -4,51 +4,54 @@
 ![Node.js](https://img.shields.io/badge/Node.js-V8-green)
 ![Bun](https://img.shields.io/badge/Bun-JavaScriptCore-purple)
 ![Deno](https://img.shields.io/badge/Deno-V8-blue)
+![Dart](https://img.shields.io/badge/Dart-SDK-teal)
 
-A comprehensive benchmarking tool to compare performance across major JavaScript runtimes:
+A comprehensive benchmarking tool to compare performance across major JavaScript and related runtimes:
 - Node.js (V8)
 - Bun (JavaScriptCore)
 - Deno (V8)
+- Dart SDK
 
 ## Latest Benchmark Results
 
-> Benchmark run on 3/23/2025, 1:14:59 PM
+> Benchmark run on 4/13/2025, 12:57:54 AM
 
 ### Runtime Performance Summary
 
 *Using Node.js as the baseline (1.00x) - lower is better*
 
-| Benchmark | Node.js | Bun | Deno |
-|-----------|------------|------------|------------|
-| array_operations | 1.00x | **0.35x** 🟢 | **0.98x** 🟢 |
-| fibonacci | 1.00x | **0.52x** 🟢 | **1.02x** 🔴 | 
-| json_parsing | 1.00x | **0.37x** 🟢 | **0.82x** 🟢 | 
-| startup_time | 1.00x | **0.50x** 🟢 | **1.01x** 🔴 | 
-| string_manipulation | 1.00x | **0.52x** 🟢 | 1.00x |
-| memory_pressure | 1.00x | **0.68x** 🟢 | **1.05x** 🔴 |
-| object_creation | 1.00x | **0.61x** 🟢 | **0.95x** 🟢 |
-| async_performance | 1.00x | **0.58x** 🟢 | **0.93x** 🟢 |
+| Benchmark | Node.js | Bun | Deno | Dart |
+|-----------|------------|------------|------------|------------|
+| array_operations | 1.00x | **0.34x** 🟢 | **0.97x** 🟢 | **2.14x** 🔴 |
+| fibonacci | 1.00x | **0.52x** 🟢 | **1.02x** 🔴 | **5.73x** 🔴 | 
+| json_parsing | 1.00x | **0.38x** 🟢 | **0.83x** 🟢 | N/A | 
+| startup_time | 1.00x | **0.48x** 🟢 | 1.00x | **5.50x** 🔴 | 
+| string_manipulation | 1.00x | **0.52x** 🟢 | **1.01x** 🔴 | **3.07x** 🔴 |
+| memory_pressure | 1.00x | **0.68x** 🟢 | N/A | N/A |
+| object_creation | 1.00x | **0.98x** 🟢 | N/A | N/A |
+| async_performance | 1.00x | **0.97x** 🟢 | N/A | N/A |
 
 ### Category Winners
 
 | Category | Winner | Performance Notes |
 |----------|--------|-------------|
-| Numerical Computation | **Bun** | ~2x faster than Node.js/Deno |
-| Array Operations | **Bun** | ~3x faster than Node.js/Deno |
-| String Manipulation | **Bun** | ~2x faster than Node.js/Deno | 
-| JSON Processing | **Bun** | ~2.7x faster than Node.js, ~2.2x faster than Deno |
-| Startup Time | **Bun** | ~2x faster than Node.js/Deno |
+| Numerical Computation | **Bun** | ~2x faster than Node.js/Deno, ~5.7x faster than Dart |
+| Array Operations | **Bun** | ~3x faster than Node.js/Deno, ~6.3x faster than Dart |
+| String Manipulation | **Bun** | ~2x faster than Node.js/Deno, ~5.9x faster than Dart | 
+| JSON Processing | **Bun** | ~2.6x faster than Node.js, ~2.2x faster than Deno |
+| Startup Time | **Bun** | ~2x faster than Node.js/Deno, ~11.5x faster than Dart |
 | Memory Management | **Bun** | Better memory efficiency and GC performance |
 | Object Optimization | **Bun** | Better handling of object shapes/transitions |
-| Async Performance | **Bun** | Faster Promise resolution and event loop |
+| Async Performance | **Bun** | Slightly faster Promise resolution and event loop |
 
 ### Runtime Characteristics
 
 | Runtime | Strengths | Weaknesses | Best Use Cases |
 |---------|-----------|------------|---------------|
 | Node.js | Mature ecosystem, stable performance, V8 optimizations | Slower startup time, higher memory usage | Production servers, enterprise applications |
-| Bun | Fast array/JSON processing, good all-rounder, low memory usage | Newer ecosystem, some compatibility issues | High-performance applications, API servers, serverless |
+| Bun | Fast array/JSON processing, good all-rounder, low memory usage | Newer ecosystem, some compatibility issues | High-performance applications, API servers, serverless functions |
 | Deno | Security features, built-in TypeScript, modern APIs | Similar performance to Node.js, more limited ecosystem | Security-critical applications, TypeScript projects |
+| Dart | Strong typing, optimized for UI, AOT compilation | Slower for general JavaScript tasks | Cross-platform apps, Flutter development, UI-heavy applications |
 
 > 🟢 **Faster than Node.js** | 🔴 **Slower than Node.js**  
 > For complete details, see [benchmark-results.md](benchmark-results.md)
@@ -133,6 +136,15 @@ curl -fsSL https://deno.land/install.sh | sh
 brew install deno
 ```
 
+#### Dart
+```bash
+# macOS with Homebrew
+brew install dart
+
+# Direct download
+# Visit https://dart.dev/get-dart
+```
+
 ### Installation
 
 ```bash
@@ -157,6 +169,7 @@ This will:
 
 ## Adding Custom Benchmarks
 
+### JavaScript Benchmarks
 Create new `.js` files in the `benchmarks/` directory. Each benchmark should:
 
 1. Execute the desired operations
@@ -183,6 +196,35 @@ const duration = endTime - startTime;
 // Log results
 console.log(`Some result: ${someResult}`);
 console.log(`Duration: ${duration}ms`);
+```
+
+### Dart Benchmarks
+Create equivalent Dart implementations in the `dart_benchmarks/` directory with the same name as the JavaScript benchmark but with a `.dart` extension.
+
+Example template:
+
+```dart
+// Description of what this benchmark tests
+import 'dart:core';
+
+void main() {
+  // Setup test data
+  final someData = /* ... */;
+  
+  // Start timing
+  final stopwatch = Stopwatch()..start();
+  
+  // Perform operations to be measured
+  // ...
+  
+  // Stop timer
+  stopwatch.stop();
+  final duration = stopwatch.elapsedMilliseconds;
+  
+  // Log results
+  print('Some result: $someResult');
+  print('Duration: ${duration}ms');
+}
 ```
 
 ## Contributing
