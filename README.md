@@ -10,36 +10,37 @@ A comprehensive benchmarking tool to compare performance across major JavaScript
 - Node.js (V8)
 - Bun (JavaScriptCore)
 - Deno (V8)
-- Dart SDK
+- Dart JIT (Just-In-Time)
+- Dart AOT (Ahead-Of-Time)
 
 ## Latest Benchmark Results
 
-> Benchmark run on 4/13/2025, 12:57:54 AM
+> Benchmark run on 4/13/2025, 1:17:32 AM
 
 ### Runtime Performance Summary
 
 *Using Node.js as the baseline (1.00x) - lower is better*
 
-| Benchmark | Node.js | Bun | Deno | Dart |
-|-----------|------------|------------|------------|------------|
-| array_operations | 1.00x | **0.34x** 🟢 | **0.97x** 🟢 | **2.14x** 🔴 |
-| fibonacci | 1.00x | **0.52x** 🟢 | **1.02x** 🔴 | **5.73x** 🔴 | 
-| json_parsing | 1.00x | **0.38x** 🟢 | **0.83x** 🟢 | N/A | 
-| startup_time | 1.00x | **0.48x** 🟢 | 1.00x | **5.50x** 🔴 | 
-| string_manipulation | 1.00x | **0.52x** 🟢 | **1.01x** 🔴 | **3.07x** 🔴 |
-| memory_pressure | 1.00x | **0.68x** 🟢 | N/A | N/A |
-| object_creation | 1.00x | **0.98x** 🟢 | N/A | N/A |
-| async_performance | 1.00x | **0.97x** 🟢 | N/A | N/A |
+| Benchmark | Node.js | Bun | Deno | Dart JIT | Dart AOT |
+|-----------|------------|------------|------------|------------|------------|
+| array_operations | 1.00x | **0.35x** 🟢 | **0.92x** 🟢 | **2.04x** 🔴 | **0.53x** 🟢 | 
+| fibonacci | 1.00x | **0.51x** 🟢 | **0.97x** 🟢 | **5.47x** 🔴 | **0.86x** 🟢 | 
+| json_parsing | 1.00x | **0.37x** 🟢 | **0.82x** 🟢 | **8.50x** 🔴 | **5.27x** 🔴 | 
+| startup_time | 1.00x | **0.54x** 🟢 | **0.90x** 🟢 | **5.02x** 🔴 | **0.62x** 🟢 | 
+| string_manipulation | 1.00x | **0.51x** 🟢 | **0.98x** 🟢 | **3.01x** 🔴 | **0.59x** 🟢 | 
+| memory_pressure | 1.00x | **0.70x** 🟢 | N/A | N/A | N/A | 
+| object_creation | 1.00x | **0.94x** 🟢 | N/A | N/A | N/A | 
+| async_performance | 1.00x | **0.92x** 🟢 | N/A | N/A | N/A | 
 
 ### Category Winners
 
 | Category | Winner | Performance Notes |
 |----------|--------|-------------|
-| Numerical Computation | **Bun** | ~2x faster than Node.js/Deno, ~5.7x faster than Dart |
-| Array Operations | **Bun** | ~3x faster than Node.js/Deno, ~6.3x faster than Dart |
-| String Manipulation | **Bun** | ~2x faster than Node.js/Deno, ~5.9x faster than Dart | 
-| JSON Processing | **Bun** | ~2.6x faster than Node.js, ~2.2x faster than Deno |
-| Startup Time | **Bun** | ~2x faster than Node.js/Deno, ~11.5x faster than Dart |
+| Numerical Computation | **Bun** | ~2x faster than Node.js/Deno, ~6x faster than Dart JIT, marginally faster than Dart AOT |
+| Array Operations | **Bun** | ~3x faster than Node.js/Deno, ~6x faster than Dart JIT, ~1.5x faster than Dart AOT |
+| String Manipulation | **Bun** | ~2x faster than Node.js/Deno, ~6x faster than Dart JIT, slightly faster than Dart AOT | 
+| JSON Processing | **Bun** | ~2.7x faster than Node.js, ~2.2x faster than Deno, ~14x faster than Dart AOT |
+| Startup Time | **Bun** | ~2x faster than Node.js/Deno, ~9x faster than Dart JIT, marginally faster than Dart AOT |
 | Memory Management | **Bun** | Better memory efficiency and GC performance |
 | Object Optimization | **Bun** | Better handling of object shapes/transitions |
 | Async Performance | **Bun** | Slightly faster Promise resolution and event loop |
@@ -51,7 +52,8 @@ A comprehensive benchmarking tool to compare performance across major JavaScript
 | Node.js | Mature ecosystem, stable performance, V8 optimizations | Slower startup time, higher memory usage | Production servers, enterprise applications |
 | Bun | Fast array/JSON processing, good all-rounder, low memory usage | Newer ecosystem, some compatibility issues | High-performance applications, API servers, serverless functions |
 | Deno | Security features, built-in TypeScript, modern APIs | Similar performance to Node.js, more limited ecosystem | Security-critical applications, TypeScript projects |
-| Dart | Strong typing, optimized for UI, AOT compilation | Slower for general JavaScript tasks | Cross-platform apps, Flutter development, UI-heavy applications |
+| Dart JIT | Strong typing, optimized for UI, good for development | Slower JIT performance, larger memory footprint | Flutter development, iterative coding, debugging |
+| Dart AOT | Strong typing, optimized native code, small footprint | Limited server-side ecosystem compared to Node.js | Production Flutter apps, performance-critical code |
 
 > 🟢 **Faster than Node.js** | 🔴 **Slower than Node.js**  
 > For complete details, see [benchmark-results.md](benchmark-results.md)
